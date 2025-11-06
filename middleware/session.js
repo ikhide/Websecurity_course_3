@@ -41,10 +41,7 @@ function sessionMiddleware(req, res, next) {
         sessions[sessionId].lastActive = Date.now();
         req.session = { sessionId, username };
       } else {
-        res.setHeader(
-          "Set-Cookie",
-          "squeak-session=; Max-Age=0; Path=/; HttpOnly"
-        );
+        res.setHeader("Set-Cookie", "squeak-session=; Max-Age=0; Path=/;");
         req.session = null;
         if (sessions[sessionId]) {
           delete sessions[sessionId];
@@ -52,10 +49,7 @@ function sessionMiddleware(req, res, next) {
       }
     } catch (err) {
       req.session = null;
-      res.setHeader(
-        "Set-Cookie",
-        "squeak-session=; Max-Age=0; Path=/; HttpOnly"
-      );
+      res.setHeader("Set-Cookie", "squeak-session=; Max-Age=0; Path=/;");
     }
   } else {
     req.session = null;
@@ -68,7 +62,7 @@ function sessionMiddleware(req, res, next) {
 
     res.setHeader(
       "Set-Cookie",
-      `squeak-session=${encodeURIComponent(cookieValue)}; HttpOnly; Path=/`
+      `squeak-session=${encodeURIComponent(cookieValue)}; Path=/`
     );
 
     return sessionId;
@@ -77,10 +71,7 @@ function sessionMiddleware(req, res, next) {
   req.destroySession = () => {
     if (req.session) {
       delete sessions[req.session.sessionId];
-      res.setHeader(
-        "Set-Cookie",
-        "squeak-session=; Max-Age=0; Path=/; HttpOnly"
-      );
+      res.setHeader("Set-Cookie", "squeak-session=; Max-Age=0; Path=/;");
     }
     req.session = null;
   };
