@@ -68,17 +68,37 @@ app.post("/signup", async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || username.length < 4) {
-    return res.json({ success: false, errorType: "username" });
+    return res.json({
+      success: false,
+      errorType: "username",
+      message: "Username must be at least 4 characters long.",
+    });
   }
 
-  if (!password || password.length < 8 || password.includes(username)) {
-    return res.json({ success: false, errorType: "password" });
+  if (!password || password.length < 8) {
+    return res.json({
+      success: false,
+      errorType: "password",
+      message: "Password must be at least 8 characters long.",
+    });
+  }
+
+  if (password.includes(username)) {
+    return res.json({
+      success: false,
+      errorType: "password",
+      message: "Password cannot contain username.",
+    });
   }
 
   const users = JSON.parse(fs.readFileSync("passwd", "utf8"));
 
   if (users[username]) {
-    return res.json({ success: false, errorType: "username" });
+    return res.json({
+      success: false,
+      errorType: "username",
+      message: "Username is already taken.",
+    });
   }
 
   const salt = crypto.randomBytes(16).toString("hex");
@@ -99,20 +119,20 @@ app.post("/signin", async (req, res) => {
 
   const user = users[username];
   if (!user) {
-    return res.json(false);
+    return res.json({ success: false, message: "Invalid username or password." });
   }
 
-  const hash = (
-    await pbkdf2(password, user.salt, 100000, 64, "sha512")
-  ).toString("hex");
+  const hash = (await pbkdf2(password, user.salt, 100000, 64, "sha512")).toString(
+    "hex"
+  );
 
   if (hash !== user.hash) {
-    return res.json(false);
+    return res.json({ success: false, message: "Invalid username or password." });
   }
 
   req.createSession(username);
 
-  res.json(true);
+  res.json({ success: true });
 });
 
 app.post("/signout", (req, res) => {

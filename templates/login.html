@@ -33,6 +33,7 @@
                                 <label for="signin-password">Password</label>
                                 <input type="password" class="form-control" id="signin-password" required>
                             </div>
+                            <div class="invalid-feedback signin-error"></div>
                             <button type="submit" class="btn btn-primary btn-block">Sign In</button>
                         </form>
                     </div>
@@ -46,13 +47,17 @@
                     <div class="card-body">
                         <h3 class="card-title text-center">Sign Up</h3>
                         <form id="signup-form">
+
                             <div class="form-group">
                                 <label for="signup-username">Username</label>
                                 <input type="text" class="form-control" id="signup-username" required>
+                                <div class="invalid-feedback invalid-feedback-username"></div>
+
                             </div>
                             <div class="form-group">
                                 <label for="signup-password">Password</label>
                                 <input type="password" class="form-control" id="signup-password" required>
+                                <div class="invalid-feedback invalid-feedback-password"></div>
                             </div>
                             <button type="submit" class="btn btn-success btn-block">Sign Up</button>
                         </form>
