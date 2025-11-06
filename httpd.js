@@ -11,10 +11,57 @@ const port = 8000;
 
 app.use(express.static("public"));
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(sessionMiddleware);
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
+  if (req.session) {
+    let squeaksHtml = "";
+    const squeaks = JSON.parse(fs.readFileSync("squeaks.json", "utf8"));
+    squeaks.forEach((squeak) => {
+      squeaksHtml += `
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">${squeak.username}</h5>
+                <p class="card-text">${squeak.text}</p>
+                <p class="card-text"><small class="text-muted">${new Date(
+                  squeak.time
+                ).toLocaleString()}</small></p>
+            </div>
+        </div>
+      `;
+    });
+
+    fs.readFile("templates/main.html", "utf8", (err, data) => {
+      if (err) {
+        res.status(500).send("Error reading main.html");
+        return;
+      }
+      const renderedHtml = data
+        .replace("{{username}}", req.session.username)
+        .replace("{{squeaks}}", squeaksHtml);
+      res.send(renderedHtml);
+    });
+  } else {
+    res.sendFile(__dirname + "/templates/login.html");
+  }
+});
+
+app.post("/squeak", (req, res) => {
+  if (!req.session) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const squeaks = JSON.parse(fs.readFileSync("squeaks.json", "utf8"));
+  squeaks.unshift({
+    username: req.session.username,
+    text: req.body.text,
+    time: Date.now(),
+  });
+
+  fs.writeFileSync("squeaks.json", JSON.stringify(squeaks, null, 2));
+
+  res.redirect("/");
 });
 
 app.post("/signup", async (req, res) => {
