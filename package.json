@@ -1,0 +1,15 @@
+{
+  "name": "patched",
+  "version": "1.0.0",
+  "description": "",
+  "main": "httpd.js",
+  "scripts": {
+    "start": "node httpd.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
