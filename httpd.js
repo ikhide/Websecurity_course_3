@@ -3,11 +3,29 @@ const fs = require("fs");
 const crypto = require("crypto");
 const util = require("util");
 const sessionMiddleware = require("./middleware/session");
+const https = require("https"); // Add https module
+const http = require("http"); // Add http module
 
 const pbkdf2 = util.promisify(crypto.pbkdf2);
 
 const app = express();
-const port = 8000;
+const port = 8000; // HTTP port
+const httpsPort = 8443; // HTTPS port
+
+// SSL certificate and key
+const privateKey = fs.readFileSync("cert/server.key", "utf8");
+const certificate = fs.readFileSync("cert/server.crt", "utf8");
+const credentials = { key: privateKey, cert: certificate };
+
+// Redirect HTTP to HTTPS
+app.use((req, res, next) => {
+  if (!req.secure) {
+    return res.redirect(
+      "https://" + req.headers.host.replace(/:\d+/, ":" + httpsPort) + req.url
+    );
+  }
+  next();
+});
 
 app.use(express.static("public"));
 app.use(express.json());
@@ -119,15 +137,21 @@ app.post("/signin", async (req, res) => {
 
   const user = users[username];
   if (!user) {
-    return res.json({ success: false, message: "Invalid username or password." });
+    return res.json({
+      success: false,
+      message: "Invalid username or password.",
+    });
   }
 
-  const hash = (await pbkdf2(password, user.salt, 100000, 64, "sha512")).toString(
-    "hex"
-  );
+  const hash = (
+    await pbkdf2(password, user.salt, 100000, 64, "sha512")
+  ).toString("hex");
 
   if (hash !== user.hash) {
-    return res.json({ success: false, message: "Invalid username or password." });
+    return res.json({
+      success: false,
+      message: "Invalid username or password.",
+    });
   }
 
   req.createSession(username);
@@ -140,6 +164,13 @@ app.post("/signout", (req, res) => {
   res.json(true);
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+const httpServer = http.createServer(app);
+const httpsServer = https.createServer(credentials, app);
+
+httpServer.listen(port, () => {
+  console.log(`HTTP Server running on port ${port}`);
+});
+
+httpsServer.listen(httpsPort, () => {
+  console.log(`HTTPS Server running on port ${httpsPort}`);
 });
