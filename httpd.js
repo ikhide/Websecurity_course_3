@@ -101,12 +101,18 @@ app.post("/signup", async (req, res) => {
     });
   }
 
-  if (password.includes(username)) {
-    return res.json({
-      success: false,
-      errorType: "password",
-      message: "Password cannot contain username.",
-    });
+  let validPassword = password !== undefined && password.length >= 8;
+
+  if (validPassword) {
+    const nameRegex = new RegExp(username, "i");
+    validPassword = !nameRegex.test(password);
+    if (!validPassword) {
+      return res.json({
+        success: false,
+        errorType: "password",
+        message: "Password cannot contain username.",
+      });
+    }
   }
 
   const users = JSON.parse(fs.readFileSync("passwd", "utf8"));
