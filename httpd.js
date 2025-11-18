@@ -5,12 +5,18 @@ const util = require("util");
 const sessionMiddleware = require("./middleware/session");
 const https = require("https"); // Add https module
 const http = require("http"); // Add http module
+const mustacheExpress = require("mustache-express");
 
 const pbkdf2 = util.promisify(crypto.pbkdf2);
 
 const app = express();
 const port = 8000; // HTTP port
 const httpsPort = 8443; // HTTPS port
+
+//  mustache template engine
+app.engine("mustache", mustacheExpress());
+app.set("view engine", "mustache");
+app.set("views", __dirname + "/templates");
 
 // SSL certificate and key
 const privateKey = fs.readFileSync("cert/server.key", "utf8");
@@ -34,34 +40,16 @@ app.use(sessionMiddleware);
 
 app.get("/", (req, res) => {
   if (req.session) {
-    let squeaksHtml = "";
     const squeaks = JSON.parse(fs.readFileSync("squeaks.json", "utf8"));
-    squeaks.forEach((squeak) => {
-      squeaksHtml += `
-        <div class="card mt-3">
-            <div class="card-body">
-                <h5 class="card-title">${squeak.username}</h5>
-                <p class="card-text">${squeak.text}</p>
-                <p class="card-text"><small class="text-muted">${new Date(
-                  squeak.time
-                ).toLocaleString()}</small></p>
-            </div>
-        </div>
-      `;
-    });
-
-    fs.readFile("templates/main.html", "utf8", (err, data) => {
-      if (err) {
-        res.status(500).send("Error reading main.html");
-        return;
-      }
-      const renderedHtml = data
-        .replace("{{username}}", req.session.username)
-        .replace("{{squeaks}}", squeaksHtml);
-      res.send(renderedHtml);
+    res.render("main", {
+      username: req.session.username,
+      squeaks: squeaks.map((squeak) => ({
+        ...squeak,
+        time: new Date(squeak.time).toLocaleString(),
+      })),
     });
   } else {
-    res.sendFile(__dirname + "/templates/login.html");
+    res.render("login");
   }
 });
 
