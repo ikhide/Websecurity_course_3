@@ -41,7 +41,10 @@ function sessionMiddleware(req, res, next) {
         sessions[sessionId].lastActive = Date.now();
         req.session = { sessionId, username };
       } else {
-        res.setHeader("Set-Cookie", "squeak-session=; Max-Age=0; Path=/;");
+        res.setHeader(
+          "Set-Cookie",
+          "squeak-session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
+        );
         req.session = null;
         if (sessions[sessionId]) {
           delete sessions[sessionId];
@@ -62,7 +65,9 @@ function sessionMiddleware(req, res, next) {
 
     res.setHeader(
       "Set-Cookie",
-      `squeak-session=${encodeURIComponent(cookieValue)}; Path=/`
+      `squeak-session=${encodeURIComponent(
+        cookieValue
+      )}; Path=/; HttpOnly; Secure; SameSite=Lax`
     );
 
     return sessionId;
@@ -71,7 +76,10 @@ function sessionMiddleware(req, res, next) {
   req.destroySession = () => {
     if (req.session) {
       delete sessions[req.session.sessionId];
-      res.setHeader("Set-Cookie", "squeak-session=; Max-Age=0; Path=/;");
+      res.setHeader(
+        "Set-Cookie",
+        "squeak-session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
+      );
     }
     req.session = null;
   };
