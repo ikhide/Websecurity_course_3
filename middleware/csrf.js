@@ -20,7 +20,7 @@ function validateCsrfToken(req, res, next) {
   if (req.method === "POST") {
     const csrfToken = req.body._csrf || req.headers["x-csrf-token"];
 
-    if (req.path === "/signin" || req.path === "/signup") {
+    if (req.originalUrl === "/signin" || req.originalUrl === "/signup") {
       // Use the module's internal token store
       if (!csrfToken || !oneTimeCsrfTokens[csrfToken]) {
         return res
@@ -48,7 +48,7 @@ const addCsrfTokenToErrorResponse = (req, res, next) => {
   const originalJson = res.json;
   res.json = function (body) {
     if (
-      (req.path === "/signup" || req.path === "/signin") &&
+      (req.originalUrl === "/signup" || req.originalUrl === "/signin") &&
       body &&
       body.success === false &&
       !body.csrfToken
