@@ -100,18 +100,16 @@ app.post("/signup", async (req, res) => {
     });
   }
 
-  let validPassword = password !== undefined && password.length >= 8;
+  const validPassword = !password
+    .toLowerCase()
+    .includes(username.toLowerCase());
 
-  if (validPassword) {
-    const nameRegex = new RegExp(username, "i");
-    validPassword = !nameRegex.test(password);
-    if (!validPassword) {
-      return res.json({
-        success: false,
-        errorType: "password",
-        message: "Password cannot contain username.",
-      });
-    }
+  if (!validPassword) {
+    return res.json({
+      success: false,
+      errorType: "password",
+      message: "Password cannot contain username.",
+    });
   }
 
   const users = JSON.parse(fs.readFileSync("passwd", "utf8"));
