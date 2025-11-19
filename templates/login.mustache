@@ -15,6 +15,7 @@
     <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
         <h5 class="my-0 mr-md-auto font-weight-normal">Squeak!</h5>
         <form id="signin-form" class="form-inline mt-2 mt-md-0">
+            <input type="hidden" name="_csrf" value="{{csrfToken}}">
             <input type="text" class="form-control mr-sm-2" id="signin-username" placeholder="Username" required>
             <input type="password" class="form-control mr-sm-2" id="signin-password" placeholder="Password" required>
             <button type="submit" class="btn btn-primary">Sign In</button>
@@ -31,7 +32,7 @@
                 <div class="card-body">
                     <h3 class="card-title text-center">Sign Up</h3>
                     <form id="signup-form">
-
+                        <input type="hidden" name="_csrf" value="{{csrfToken}}">
                         <div class="form-group">
                             <label for="signup-username">Username</label>
                             <input type="text" class="form-control" id="signup-username" required>

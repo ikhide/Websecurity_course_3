@@ -39,7 +39,11 @@ function sessionMiddleware(req, res, next) {
       ) {
         // Session is valid
         sessions[sessionId].lastActive = Date.now();
-        req.session = { sessionId, username };
+        req.session = {
+          sessionId,
+          username,
+          csrfToken: sessions[sessionId].csrfToken,
+        };
       } else {
         res.setHeader(
           "Set-Cookie",
@@ -57,10 +61,10 @@ function sessionMiddleware(req, res, next) {
   } else {
     req.session = null;
   }
-
   req.createSession = (username) => {
     const sessionId = generateSessionId();
-    sessions[sessionId] = { username, lastActive: Date.now() };
+    const csrfToken = crypto.randomBytes(16).toString("hex");
+    sessions[sessionId] = { username, lastActive: Date.now(), csrfToken };
     const cookieValue = JSON.stringify({ sessionId, username });
 
     res.setHeader(

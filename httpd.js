@@ -3,15 +3,39 @@ const fs = require("fs");
 const crypto = require("crypto");
 const util = require("util");
 const sessionMiddleware = require("./middleware/session");
+
 const https = require("https"); // Add https module
 const http = require("http"); // Add http module
 const mustacheExpress = require("mustache-express");
 
 const pbkdf2 = util.promisify(crypto.pbkdf2);
 
+const {
+  createOneTimeToken,
+  validateCsrfToken,
+  addCsrfTokenToErrorResponse,
+} = require("./middleware/csrf");
+
 const app = express();
 const port = 8000; // HTTP port
 const httpsPort = 8443; // HTTPS port
+
+const headersMiddlewareFactory = require("./middleware/headers");
+const { validateHeaders, redirectToHttps } = headersMiddlewareFactory(
+  port,
+  httpsPort
+);
+
+app.use(express.static("public"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(sessionMiddleware);
+
+//CSRF Middleware
+app.use(addCsrfTokenToErrorResponse);
+app.use(validateCsrfToken);
+app.use(redirectToHttps);
+app.use(validateHeaders);
 
 //  mustache template engine
 app.engine("mustache", mustacheExpress());
@@ -23,21 +47,6 @@ const privateKey = fs.readFileSync("cert/server.key", "utf8");
 const certificate = fs.readFileSync("cert/server.crt", "utf8");
 const credentials = { key: privateKey, cert: certificate };
 
-// Redirect HTTP to HTTPS
-app.use((req, res, next) => {
-  if (!req.secure) {
-    return res.redirect(
-      "https://" + req.headers.host.replace(/:\d+/, ":" + httpsPort) + req.url
-    );
-  }
-  next();
-});
-
-app.use(express.static("public"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(sessionMiddleware);
-
 app.get("/", (req, res) => {
   if (req.session) {
     const squeaks = JSON.parse(fs.readFileSync("squeaks.json", "utf8"));
@@ -47,9 +56,11 @@ app.get("/", (req, res) => {
         ...squeak,
         time: new Date(squeak.time).toLocaleString(),
       })),
+      csrfToken: req.session.csrfToken,
     });
   } else {
-    res.render("login");
+    const oneTimeToken = createOneTimeToken();
+    res.render("login", { csrfToken: oneTimeToken });
   }
 });
 
