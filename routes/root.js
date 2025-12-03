@@ -1,18 +1,24 @@
 const express = require("express");
-const fs = require("fs");
 const { createOneTimeToken } = require("../middleware/csrf");
+const { getUsers, getSqueaks, getSqueals } = require("../services/database");
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   if (req.session) {
-    const squeaks = JSON.parse(fs.readFileSync("squeaks.json", "utf8"));
+    const username = req.session.username;
+
+    const [users, squeaks, squeals] = await Promise.all([
+      getUsers(), // All usernames for recipient dropdown
+      getSqueaks("all"), // Public squeaks (recipient = "all")
+      getSqueals(username), // Private squeals for current user
+    ]);
+
     res.render("main", {
-      username: req.session.username,
-      squeaks: squeaks.map((squeak) => ({
-        ...squeak,
-        time: new Date(squeak.time).toLocaleString(),
-      })),
+      username: username,
+      users: users,
+      squeaks: squeaks,
+      squeals: squeals,
       csrfToken: req.session.csrfToken,
     });
   } else {
