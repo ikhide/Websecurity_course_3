@@ -30,27 +30,67 @@
                         <h3 class="card-title">Welcome, {{username}}!</h3>
                         <form action="/squeak" method="post">
                             <input type="hidden" name="_csrf" value="{{csrfToken}}">
+
                             <div class="form-group">
-                                <textarea class="form-control" name="text" rows="3" placeholder="What's on your mind?"></textarea>
+                                <label for="recipient">Recipient:</label>
+                                <select class="form-control" name="recipient" id="recipient">
+                                    <option value="all">Everyone (Public Squeak)</option>
+                                    {{#users}}
+                                    <option value="{{.}}">{{.}} (Private Squeal)</option>
+                                    {{/users}}
+                                </select>
                             </div>
-                            <button type="submit" class="btn btn-primary">Squeak</button>
+
+                            <div class="form-group">
+                                <textarea class="form-control" name="text" rows="3" placeholder="What's squeaking?"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Post</button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Public Squeaks Section -->
         <div class="row mt-5">
             <div class="col-md-8 offset-md-2">
+                <h4 class="mb-3">
+                    <span class="badge badge-primary">Public Squeaks</span>
+                </h4>
                 {{#squeaks}}
-                <div class="card mt-3">
+                <div class="card mt-3 border-primary">
                     <div class="card-body">
-                        <h5 class="card-title">{{username}}</h5>
-                        <p class="card-text">{{text}}</p>
+                        <h5 class="card-title">{{name}}</h5>
+                        <p class="card-text">{{squeak}}</p>
                         <p class="card-text"><small class="text-muted">{{time}}</small></p>
                     </div>
                 </div>
                 {{/squeaks}}
+                {{^squeaks}}
+                <div class="alert alert-info">No public squeaks yet. Be the first to squeak!</div>
+                {{/squeaks}}
+            </div>
+        </div>
+
+        <!-- Private Squeals Section -->
+        <div class="row mt-5">
+            <div class="col-md-8 offset-md-2">
+                <h4 class="mb-3">
+                    <span class="badge badge-success">Your Private Squeals</span>
+                </h4>
+                {{#squeals}}
+                <div class="card mt-3 border-success">
+                    <div class="card-body">
+                        <h5 class="card-title">{{name}}</h5>
+                        <p class="card-text">{{squeak}}</p>
+                        <p class="card-text"><small class="text-muted">{{time}}</small></p>
+                    </div>
+                </div>
+                {{/squeals}}
+                {{^squeals}}
+                <div class="alert alert-info">No private squeals for you yet.</div>
+                {{/squeals}}
             </div>
         </div>
     </div>
