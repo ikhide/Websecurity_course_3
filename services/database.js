@@ -60,7 +60,6 @@ async function authenticate(username, password) {
     username: username,
     password: password,
   });
-
   return user !== null;
 }
 
