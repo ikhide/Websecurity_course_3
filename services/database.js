@@ -116,6 +116,16 @@ async function addSqueak(username, recipient, squeak) {
   });
 }
 
+async function getSqueaks(recipient) {
+  const { squeaks } = getCollections();
+  return await squeaks.find({ recipient: recipient }).toArray();
+}
+
+async function getSqueals(username) {
+  const { squeaks } = getCollections();
+  return await squeaks.find({ recipient: username }).toArray();
+}
+
 module.exports = {
   connectToDatabase,
   getCollections,
@@ -127,5 +137,7 @@ module.exports = {
   findSession,
   invalidateSession,
   addSqueak,
+  getSqueaks,
+  getSqueals,
   client,
 };
