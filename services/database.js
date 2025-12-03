@@ -80,6 +80,42 @@ async function getUsers() {
   return users.map((u) => u.username);
 }
 
+const crypto = require("crypto");
+
+async function newSession() {
+  const { sessions } = getCollections();
+
+  let sessionid = crypto.randomBytes(64).toString("hex");
+  await sessions.insertOne({ id: sessionid });
+
+  return sessionid;
+}
+
+async function findSession(sessionid) {
+  const { sessions } = getCollections();
+  return await sessions.findOne({ id: sessionid });
+}
+
+async function invalidateSession(sessionid) {
+  const { sessions } = getCollections();
+
+  return await sessions.findOneAndDelete({ id: sessionid });
+}
+
+async function addSqueak(username, recipient, squeak) {
+  const { squeaks } = getCollections();
+
+  let options = { weekday: "short", hour: "numeric", minute: "numeric" };
+  let time = new Date().toLocaleDateString("sv-SE", options);
+
+  await squeaks.insertOne({
+    name: username, // From unverified cookie!
+    time: time,
+    recipient: recipient, // "all" or specific username
+    squeak: squeak,
+  });
+}
+
 module.exports = {
   connectToDatabase,
   getCollections,
@@ -87,5 +123,9 @@ module.exports = {
   authenticate,
   addUser,
   getUsers,
+  newSession,
+  findSession,
+  invalidateSession,
+  addSqueak,
   client,
 };
