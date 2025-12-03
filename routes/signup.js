@@ -1,9 +1,5 @@
 const express = require("express");
-const fs = require("fs");
-const crypto = require("crypto");
-const util = require("util");
-
-const pbkdf2 = util.promisify(crypto.pbkdf2);
+const { addUser, getCollections } = require("../services/database");
 
 const router = express.Router();
 
@@ -26,21 +22,10 @@ router.post("/", async (req, res) => {
     });
   }
 
-  const validPassword = !password
-    .toLowerCase()
-    .includes(username.toLowerCase());
+  const { credentials } = getCollections();
+  const existingUser = await credentials.findOne({ username: username });
 
-  if (!validPassword) {
-    return res.json({
-      success: false,
-      errorType: "password",
-      message: "Password cannot contain username.",
-    });
-  }
-
-  const users = JSON.parse(fs.readFileSync("passwd", "utf8"));
-
-  if (users[username]) {
+  if (existingUser) {
     return res.json({
       success: false,
       errorType: "username",
@@ -48,14 +33,7 @@ router.post("/", async (req, res) => {
     });
   }
 
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = (await pbkdf2(password, salt, 100000, 64, "sha512")).toString(
-    "hex"
-  );
-
-  users[username] = { salt, hash };
-
-  fs.writeFileSync("passwd", JSON.stringify(users, null, 2));
+  await addUser(username, password);
 
   res.json({ success: true });
 });

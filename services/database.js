@@ -53,9 +53,39 @@ async function closeConnection() {
   }
 }
 
+async function authenticate(username, password) {
+  const { credentials } = getCollections();
+
+  let user = await credentials.findOne({
+    username: username,
+    password: password,
+  });
+
+  return user !== null;
+}
+
+async function addUser(username, password) {
+  const { credentials } = getCollections();
+  await credentials.insertOne({
+    username: username,
+    password: password,
+  });
+}
+
+async function getUsers() {
+  const { credentials } = getCollections();
+  const users = await credentials
+    .find({}, { projection: { username: 1, _id: 0 } })
+    .toArray();
+  return users.map((u) => u.username);
+}
+
 module.exports = {
   connectToDatabase,
   getCollections,
   closeConnection,
+  authenticate,
+  addUser,
+  getUsers,
   client,
 };
