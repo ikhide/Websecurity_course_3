@@ -18,7 +18,7 @@ function parseCookies(cookieHeader) {
 }
 
 // Generate random session IDs
-function generateSessionId() {
+function generateRandomId() {
   return crypto.randomBytes(16).toString("hex");
 }
 
@@ -62,8 +62,8 @@ function sessionMiddleware(req, res, next) {
     req.session = null;
   }
   req.createSession = (username) => {
-    const sessionId = generateSessionId();
-    const csrfToken = crypto.randomBytes(16).toString("hex");
+    const sessionId = generateRandomId();
+    const csrfToken = generateRandomId();
     sessions[sessionId] = { username, lastActive: Date.now(), csrfToken };
     const cookieValue = JSON.stringify({ sessionId, username });
 

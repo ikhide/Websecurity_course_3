@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const sessionMiddleware = require("./middleware/session");
+const { connectToDatabase } = require("./services/database");
 
 const https = require("https"); // Add https module
 const http = require("http"); // Add http module
@@ -48,10 +49,29 @@ app.use("/", routes);
 const httpServer = http.createServer(app);
 const httpsServer = https.createServer(credentials, app);
 
-httpServer.listen(port, () => {
-  console.log(`HTTP Server running on http://localhost:${port}`);
-});
+// Initialize MongoDB connection before starting servers
+async function startServer() {
+  try {
+    // Connect to MongoDB
+    await connectToDatabase();
+    console.log("Database connection established");
 
-httpsServer.listen(httpsPort, () => {
-  console.log(`HTTPS Server running on https://localhost:${httpsPort}`);
-});
+    // Start HTTP server
+    httpServer.listen(port, () => {
+      console.log(`HTTP Server running on http://localhost:${port}`);
+    });
+
+    // Start HTTPS server
+    httpsServer.listen(httpsPort, () => {
+      console.log(`HTTPS Server running on https://localhost:${httpsPort}`);
+    });
+
+    console.log("Application Started");
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
+}
+
+// Start the application
+startServer();
