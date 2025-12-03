@@ -2,8 +2,8 @@ const express = require("express");
 
 const router = express.Router();
 
-router.post("/", (req, res) => {
-  req.destroySession();
+router.post("/", async (req, res) => {
+  await req.destroySession();
   res.json(true);
 });
 

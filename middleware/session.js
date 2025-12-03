@@ -1,13 +1,15 @@
 const crypto = require("crypto");
-
-const sessions = {};
-const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+const {
+  findSession,
+  newSession,
+  invalidateSession,
+} = require("../services/database");
 
 function parseCookies(cookieHeader) {
   const cookies = {};
   if (!cookieHeader) return cookies;
 
-  const cookiePairs = cookieHeader.split(";"); // "key=value; key2=value2"
+  const cookiePairs = cookieHeader.split(";");
   for (let pair of cookiePairs) {
     const [key, value] = pair.trim().split("=");
     if (key && value) {
@@ -17,13 +19,16 @@ function parseCookies(cookieHeader) {
   return cookies;
 }
 
-// Generate random session IDs
+// Generate random CSRF tokens
 function generateRandomId() {
   return crypto.randomBytes(16).toString("hex");
 }
 
+// In-memory CSRF token storage
+const csrfTokens = {};
+
 // Session middleware
-function sessionMiddleware(req, res, next) {
+async function sessionMiddleware(req, res, next) {
   const cookieHeader = req.headers.cookie;
   const cookies = parseCookies(cookieHeader);
 
@@ -32,27 +37,24 @@ function sessionMiddleware(req, res, next) {
       const sessionData = JSON.parse(cookies["squeak-session"]);
       const { sessionId, username } = sessionData;
 
-      if (
-        sessions[sessionId] &&
-        sessions[sessionId].username === username &&
-        Date.now() - sessions[sessionId].lastActive < SESSION_TIMEOUT
-      ) {
-        // Session is valid
-        sessions[sessionId].lastActive = Date.now();
+      const sessionExists = await findSession(sessionId);
+
+      if (sessionExists) {
         req.session = {
           sessionId,
           username,
-          csrfToken: sessions[sessionId].csrfToken,
+          csrfToken: csrfTokens[sessionId] || generateRandomId(),
         };
+
+        if (!csrfTokens[sessionId]) {
+          csrfTokens[sessionId] = req.session.csrfToken;
+        }
       } else {
         res.setHeader(
           "Set-Cookie",
           "squeak-session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Strict"
         );
         req.session = null;
-        if (sessions[sessionId]) {
-          delete sessions[sessionId];
-        }
       }
     } catch (err) {
       req.session = null;
@@ -61,10 +63,13 @@ function sessionMiddleware(req, res, next) {
   } else {
     req.session = null;
   }
-  req.createSession = (username) => {
-    const sessionId = generateRandomId();
+
+  req.createSession = async (username) => {
+    const sessionId = await newSession();
     const csrfToken = generateRandomId();
-    sessions[sessionId] = { username, lastActive: Date.now(), csrfToken };
+
+    csrfTokens[sessionId] = csrfToken;
+
     const cookieValue = JSON.stringify({ sessionId, username });
 
     res.setHeader(
@@ -77,9 +82,11 @@ function sessionMiddleware(req, res, next) {
     return sessionId;
   };
 
-  req.destroySession = () => {
+  req.destroySession = async () => {
     if (req.session) {
-      delete sessions[req.session.sessionId];
+      await invalidateSession(req.session.sessionId);
+      delete csrfTokens[req.session.sessionId];
+
       res.setHeader(
         "Set-Cookie",
         "squeak-session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Strict"

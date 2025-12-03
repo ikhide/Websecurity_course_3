@@ -15,7 +15,8 @@ router.post("/", async (req, res) => {
     });
   }
 
-  req.createSession(username);
+  // Create session asynchronously
+  await req.createSession(username);
 
   res.json({ success: true });
 });
